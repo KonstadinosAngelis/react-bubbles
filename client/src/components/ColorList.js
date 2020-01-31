@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { axiosWithAuth } from "../utils/axiosWithAuth";
 
 const initialColor = {
   color: "",
@@ -7,32 +7,50 @@ const initialColor = {
 };
 
 const ColorList = ({ colors, updateColors }) => {
-  console.log(colors);
   const [editing, setEditing] = useState(false);
   const [colorToEdit, setColorToEdit] = useState(initialColor);
+  const [addColor, setAddColor] = useState("")
+  const [addHex, setAddHex] = useState("")
 
   const editColor = color => {
     setEditing(true);
     setColorToEdit(color);
   };
 
-  const saveEdit = e => {
-    e.preventDefault();
-    // Make a put request to save your updated color
-    // think about where will you get the id from...
-    // where is is saved right now?
+  const saveEdit = () => {
+    axiosWithAuth().put(`/api/colors/${colorToEdit.id}`, {
+      color: colorToEdit.color,
+      code: colorToEdit.code,
+      id: colorToEdit.id
+    })
   };
 
   const deleteColor = color => {
-    // make a delete request to delete this color
+    axiosWithAuth().delete(`/api/colors/${color.id}`)
   };
+
+  const onChange = e => {
+    return(
+    e.target.name === 'addColor' ? setAddColor(e.target.value):
+    e.target.name === 'addHex' ? setAddHex(e.target.value) :
+    null
+    )}
+
+  const addNewColor = () => {
+    axiosWithAuth().post('api/colors', ({
+      color: addColor,
+      code: {
+        hex: addHex
+      }
+    }))
+  }
 
   return (
     <div className="colors-wrap">
       <p>colors</p>
       <ul>
         {colors.map(color => (
-          <li key={color.color} onClick={() => editColor(color)}>
+          <li key={color.color} onClick={() =>{editColor(color)}}>
             <span>
               <span className="delete" onClick={e => {
                     e.stopPropagation();
@@ -81,7 +99,24 @@ const ColorList = ({ colors, updateColors }) => {
         </form>
       )}
       <div className="spacer" />
-      {/* stretch - build another form here to add a color */}
+      <form onSubmit={addNewColor}>
+        <input 
+        type="text"
+        name="addColor"
+        placeholder="Color Name"
+        onChange={onChange}
+        value={addColor}
+        /> 
+
+        <input 
+        type="text"
+        name="addHex"
+        placeholder="Hexidecimal Value"
+        onChange={onChange}
+        value={addHex}
+        />
+        <button>AddColor</button>
+      </form>
     </div>
   );
 };
